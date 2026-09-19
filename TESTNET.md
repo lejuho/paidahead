@@ -2,7 +2,7 @@
 
 로컬 시연의 성공 상태: 커밋 `6732cf0`, 태그 `demo-local-verified-20260919`.
 기존 `npm run stack -- up`은 로컬 체인 31337과 포트 3000을 사용한다.
-테스트넷은 별도 DB `paidahead_testnet`, 웹 3100, API 3103을 사용하며 로컬 DB·계약을 초기화하지 않는다.
+테스트넷은 별도 DB `paidahead_testnet`, 웹 3200, API 3103을 사용하며 로컬 DB·계약을 초기화하지 않는다.
 인증은 여전히 로컬 전용 시연 모드다. 웹/API는 127.0.0.1에만 바인딩하고 인터넷에 공개하지 않는다.
 
 ## 준비
@@ -44,7 +44,7 @@ npm run testnet -- up
 ## MetaMask 시연
 
 1. `.local/testnet/wallets.json`의 supplier/buyer/bank 개인키를 본인 MetaMask에 직접 가져온다. 채팅에 붙여넣지 않는다.
-2. http://localhost:3100 에 접속한다.
+2. http://localhost:3200 에 접속한다.
 3. 각 역할을 선택하고 대응하는 MetaMask 계정으로 전환한다.
 4. 지갑의 네트워크 전환 버튼으로 Injective EVM Testnet을 추가한다.
 5. 기존 9단계 시연 흐름을 진행한다. 최초 allowance 승인 포함 서명은 총 5회다.

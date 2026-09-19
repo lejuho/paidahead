@@ -167,7 +167,7 @@ function environment() {
 const services = {
   api: { cwd: "apps/api", args: ["src/server.ts"] },
   worker: { cwd: "apps/worker", args: ["src/cli.ts", "--watch"] },
-  web: { cwd: "apps/web", args: [resolve(root, "node_modules/next/dist/bin/next"), "dev", "--hostname", "127.0.0.1", "--port", "3100"] },
+  web: { cwd: "apps/web", args: [resolve(root, "node_modules/next/dist/bin/next"), "dev", "--hostname", "127.0.0.1", "--port", "3200"] },
 };
 const alive = (pid) => { try { process.kill(pid, 0); return true; } catch { return false; } };
 async function up() {
@@ -187,7 +187,7 @@ async function up() {
     const child = spawn(process.execPath, service.args, { cwd: resolve(root, service.cwd), env, detached: true, stdio: ["ignore", fd, fd] });
     child.unref(); closeSync(fd); pids[name] = child.pid; save("pids.json", pids);
   }
-  for (const [name, url] of [["api", "http://127.0.0.1:3103/health"], ["web", "http://127.0.0.1:3100/api/demo/session"]]) {
+  for (const [name, url] of [["api", "http://127.0.0.1:3103/health"], ["web", "http://127.0.0.1:3200/api/demo/session"]]) {
     let ok = false;
     for (let n = 0; n < 60; n++) {
       if (!alive(pids[name])) throw new Error(`${name} exited; see .local/testnet/${name}.log`);
@@ -197,7 +197,7 @@ async function up() {
     if (!ok) throw new Error(`${name} readiness timed out`);
   }
   if (!alive(pids.worker)) throw new Error("Worker exited; see .local/testnet/worker.log");
-  console.log("Testnet demo ready: http://localhost:3100 (local demo remains at :3000)");
+  console.log("Testnet demo ready: http://localhost:3200 (local demo remains at :3000)");
 }
 function down() {
   if (!existsSync(file("pids.json"))) return;

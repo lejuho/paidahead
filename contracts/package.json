@@ -1,0 +1,18 @@
+{
+  "name": "@paidahead/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "hardhat build",
+    "test": "hardhat test",
+    "demo": "hardhat run scripts/demo.ts",
+    "node": "hardhat node --hostname 127.0.0.1",
+    "setup:local": "node --env-file-if-exists=../.env ../node_modules/hardhat/dist/src/cli.js run scripts/setup-local.ts --network localhost"
+  },
+  "dependencies": {
+    "@paidahead/database": "0.1.0",
+    "@paidahead/domain": "0.1.0",
+    "@openzeppelin/contracts": "5.4.0"
+  }
+}

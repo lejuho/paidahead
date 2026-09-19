@@ -1,0 +1,45 @@
+{
+  "name": "paidahead",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "contracts"
+  ],
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "build": "npm run build -w @paidahead/domain && npm run build -w @paidahead/database && npm run build -w @paidahead/api && npm run build -w @paidahead/worker && npm run build -w @paidahead/contracts && npm run build -w @paidahead/web",
+    "test": "npm run test -w @paidahead/domain && npm run test -w @paidahead/web && node scripts/test-api.mjs --with-contracts",
+    "typecheck": "tsc --noEmit && npm run typecheck -w @paidahead/web",
+    "check": "npm run build && npm run typecheck && npm test",
+    "test:api": "npm run build -w @paidahead/domain && npm run build -w @paidahead/database && node scripts/test-api.mjs",
+    "db:migrate": "npm run migrate -w @paidahead/database",
+    "db:seed": "npm run seed -w @paidahead/database",
+    "dev:api": "npm run dev -w @paidahead/api",
+    "demo:api": "node scripts/demo-api.mjs",
+    "worker:once": "npm run once -w @paidahead/worker",
+    "worker:start": "npm run start -w @paidahead/worker",
+    "demo:registration": "node scripts/demo-api.mjs --wait-registration",
+    "chain:local": "npm run node -w @paidahead/contracts",
+    "chain:setup": "npm run setup:local -w @paidahead/contracts",
+    "demo:settlement": "node --env-file-if-exists=.env scripts/demo-settlement.mjs",
+    "dev:web": "npm run dev -w @paidahead/web",
+    "db:local": "node scripts/local-pg.mjs start",
+    "db:local:stop": "node scripts/local-pg.mjs stop",
+    "demo:fund": "node --env-file-if-exists=.env scripts/demo-fund.mjs",
+    "e2e:web": "npm run e2e -w @paidahead/web",
+    "stack": "node --env-file-if-exists=.env scripts/stack.mjs"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox-viem": "5.0.7",
+    "@types/node": "26.6.2",
+    "@types/pg": "8.23.1",
+    "hardhat": "3.17.0",
+    "solc": "0.8.28",
+    "typescript": "7.0.2",
+    "viem": "2.56.8"
+  }
+}

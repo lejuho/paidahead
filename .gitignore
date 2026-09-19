@@ -1,0 +1,13 @@
+node_modules/
+dist/
+artifacts/
+cache/
+coverage/
+.local/
+.env
+.env.*
+!.env.example
+.next/
+next-env.d.ts
+*.tsbuildinfo
+e2e-output/

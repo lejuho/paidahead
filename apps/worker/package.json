@@ -1,0 +1,5 @@
+{
+  "name": "@paidahead/worker", "version": "0.1.0", "private": true, "type": "module",
+  "scripts": { "build": "tsc -p tsconfig.json", "once": "node --env-file-if-exists=../../.env src/cli.ts", "start": "node --env-file-if-exists=../../.env src/cli.ts --watch" },
+  "dependencies": { "@paidahead/database": "0.1.0", "@paidahead/domain": "0.1.0", "viem": "2.56.8" }
+}

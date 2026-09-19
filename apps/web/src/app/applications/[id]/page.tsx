@@ -1,4 +1,5 @@
 "use client";
+import { DocumentAi } from "@/features/document-ai";
 import Link from "next/link";
 import { use, useState } from "react";
 import { api } from "@/lib/api";
@@ -36,6 +37,7 @@ export default function ApplicationDetail({ params }: { params: Promise<{ id: st
     <Progress steps={[{ title: "서류 제출·검토", state: state(1) }, { title: "구매처 확인", state: state(2), note: cf ? confirmationLabel(cf.status).text : undefined },
       { title: "채권 등록", state: state(3), note: reg && reg.status !== "CONFIRMATION_REQUIRED" ? registrationLabel(reg.status).text : undefined }, { title: "은행 조건 · 먼저받기", state: state(4) }]} />
     <ErrorBox code={action.error} />
+    <DocumentAi key={`${id}:${a.version}`} id={id} revision={a.version} />
 
     {revising ? (<Card title="보완 후 새 버전 만들기"><Notice>새 버전을 만들면 이전 확인 요청은 무효가 되고, 서류 검토와 구매처 확인을 다시 받아야 합니다.</Notice>
       <ApplicationForm submitLabel={`버전 ${a.version + 1} 저장`} initial={{ buyerOrgId: a.buyer_org_id, targetBankOrgId: a.target_bank_org_id, tradeReference: a.trade_reference, title: a.title,
@@ -77,7 +79,7 @@ function ReviewForm({ detail, onDone }: { detail: Detail; onDone(): void }) {
   const total = totals.every((t) => t !== null) ? totals.reduce<bigint>((sum, t) => sum + t!, 0n) : null;
   const matches = total !== null && total.toString() === detail.confirmed_amount;
   const update = (index: number, patch: Partial<(typeof items)[number]>) => setItems(items.map((item, i) => (i === index ? { ...item, ...patch } : item)));
-  return (<Card title="1. 서류 검토" aside={<span className="demo-tag">AI 분석 대신 수동 검토 (시연)</span>}>
+  return (<Card title="1. 서류 검토" aside={<span className="demo-tag">담당자 최종 검토 (시연)</span>}>
     <p>서류의 품목을 입력해 합계가 신청 금액 {formatKrw(detail.confirmed_amount)}과 같은지 확인하세요.</p>
     {items.map((item, i) => (<div key={i} className="item-row">
       <label>품목<input value={item.name} onChange={(e) => update(i, { name: e.target.value })} maxLength={200} /></label>

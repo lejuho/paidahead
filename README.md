@@ -70,3 +70,7 @@ ABI와 타입은 `npm run build` 후 `contracts/artifacts`에 생성된다. `Rec
 ## Injective 테스트넷
 
 별도 지갑·DB·포트로 실행하는 절차는 [테스트넷 안내](TESTNET.md)를 참고한다. `npm run testnet -- status`로 연결과 잔액을 확인한다. 실제 배포 성공 여부는 `.local/testnet/deployment.json`과 온체인 영수증으로 확인한다.
+
+### 가상 서류 AI 비교
+
+신청 상세에서 OpenAI API로 가상 서류 3종의 금액·지급일·품목을 분석할 수 있습니다. API 키 설정 및 현재 범위는 [AI 데모 안내](AI_DEMO.md)를 참고하세요. 키 미설정 시 수동 검토를 유지하며 실제 분석 완료로 표시하지 않습니다. 파일 업로드·OCR은 미구현입니다.

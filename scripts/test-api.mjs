@@ -5,7 +5,7 @@ import { join } from "node:path";
 
 // Every test creates/drops only its own randomly named schema, including with an external URL.
 function run(url) {
-  const result = spawnSync(process.execPath, ["--test", "apps/api/test/confirmation.test.ts"], {
+  const result = spawnSync(process.execPath, ["--test", "apps/api/test/confirmation.test.ts", "apps/api/test/document-ai.test.ts"], {
     cwd: new URL("../", import.meta.url), stdio: "inherit",
     env: { ...process.env, TEST_DATABASE_URL: url },
   });

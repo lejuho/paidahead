@@ -40,7 +40,7 @@ export function ApplicationForm({ initial, submitLabel, onSubmit }: { initial?: 
         <label>구매처<select value={buyerId} onChange={(e) => setBuyer(e.target.value)}>{buyers.map((o) => <option key={o.id} value={o.id}>{o.display_name}</option>)}</select></label>
         <label>매입 검토 은행<input value={bank?.display_name ?? "-"} readOnly /></label></div>
     </Card>
-    <Card title="증빙 서류" aside={<DemoTag>파일 업로드·AI 분석은 이번 범위 밖 · 가상 서류 사용</DemoTag>}>
+    <Card title="증빙 서류" aside={<DemoTag>가상 서류 사용 · 신청 후 AI 비교 가능 · 파일 업로드 미지원</DemoTag>}>
       {catalog.data.documents.map((d) => (<label key={d.id} className="check"><input type="checkbox" checked={documents.includes(d.id)}
         onChange={(e) => setPicked(e.target.checked ? [...documents, d.id] : documents.filter((x) => x !== d.id))} />
         <span><b>{documentType[d.document_type] ?? d.document_type}</b> {d.original_filename}</span></label>))}

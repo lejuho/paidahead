@@ -1,3 +1,4 @@
+import { documentAi } from "./document-ai.ts";
 import Fastify, { type FastifyRequest } from "fastify";
 import { z, ZodError } from "zod";
 import { type PublicClient } from "viem";
@@ -11,6 +12,7 @@ export function createApp(pool: DatabasePool, options: { demoMode: boolean; chai
   if (!options.demoMode || process.env.NODE_ENV === "production") throw new Error("Only non-production demo authentication is implemented");
   const app = Fastify({ bodyLimit: 64 * 1024, logger: false });
   const service = services(pool);
+  const analyze = documentAi(pool);
   const bank = banking(pool);
   const view = queries(pool);
   const actors = new WeakMap<FastifyRequest, Actor>();
@@ -63,6 +65,7 @@ export function createApp(pool: DatabasePool, options: { demoMode: boolean; chai
     }));
     api.post("/applications", async (r, reply) => reply.code(201).send(await service.create(actor(r), revisionInput.parse(r.body))));
     api.post("/applications/:id/revisions", async (r, reply) => reply.code(201).send(await service.revise(actor(r), id(r), revisionInput.extend({ expectedRevision: revisionNumber }).parse(r.body))));
+    api.post("/applications/:id/analysis", async (r) => analyze(actor(r), id(r), z.object({ expectedRevision: revisionNumber }).strict().parse(r.body).expectedRevision));
     api.post("/applications/:id/review", async (r) => service.review(actor(r), id(r), reviewInput.parse(r.body)));
     api.post("/applications/:id/confirmations", async (r) => service.request(actor(r), id(r), requestInput.parse(r.body)));
     api.post("/confirmations/:id/decision", async (r) => service.decide(actor(r), id(r), decisionInput.parse(r.body)));

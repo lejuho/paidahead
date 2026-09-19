@@ -53,6 +53,21 @@ describe("PostgreSQL purchase confirmation API", () => {
     decision: "CONFIRM", snapshotHash: cf.snapshot_hash, deliveryAcknowledged: true, paymentObligationAcknowledged: true, ...extra,
   }, "buyer");
 
+  it("AI endpoint keeps organization scope, revision checks and missing-key truth", async () => {
+    const saved = process.env.OPENAI_API_KEY;
+    delete process.env.OPENAI_API_KEY;
+    try {
+      const a = await create();
+      const denied = await call(`/applications/${a.id}/analysis`, { expectedRevision: 1 }, "buyer");
+      assert.equal(denied.statusCode, 403);
+      assert.equal((await call(`/applications/${a.id}/analysis`, { expectedRevision: 2 })).statusCode, 409);
+      const missing = await call(`/applications/${a.id}/analysis`, { expectedRevision: 1 });
+      assert.equal(missing.statusCode, 503); assert.equal(missing.json().error, "AI_NOT_CONFIGURED");
+      assert.equal((await call(`/applications/${a.id}/analysis`, { expectedRevision: 1, text: "must not transmit" })).statusCode, 400);
+      assert.equal((await review(a.id)).statusCode, 200, "manual review remains available");
+    } finally { if (saved === undefined) delete process.env.OPENAI_API_KEY; else process.env.OPENAI_API_KEY = saved; }
+  });
+
   it("migrations and seed reruns preserve existing records", async () => {
     await migrate(pool); await seedDemo(pool);
     assert.equal((await pool.query("SELECT count(*) FROM organization")).rows[0].count, "3");

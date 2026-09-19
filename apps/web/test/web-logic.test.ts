@@ -121,3 +121,25 @@ describe("customer status preserves settlement truth when technical details are 
     assert.match(customerProgress({ server: "AWAITING_SIGNATURE", phase: "approving", hasHash: false }), /1단계 사용 승인/);
   });
 });
+
+import { advance, flowStates, initialTour, isMyTurn, ledger, stepOf, switchRole, STAGES } from "../src/tour/model.ts";
+describe("screen tour simulation", () => {
+  it("only the actor whose turn it is can advance, through to full repayment", () => {
+    let s = initialTour("buyer");
+    assert.equal(isMyTurn(s), false); assert.equal(advance(s), s, "a buyer cannot create the supplier's application");
+    const order: string[] = [];
+    for (let guard = 0; s.stage !== "REPAID" && guard < 20; guard++) { s = switchRole(s, stepOf(s)!.actor); order.push(s.role); s = advance(s); }
+    assert.equal(s.stage, "REPAID"); assert.equal(s.events.length, STAGES.length - 1); assert.equal(advance(s), s);
+    assert.deepEqual(order, ["supplier", "supplier", "supplier", "buyer", "bank", "bank", "bank", "supplier", "buyer"]);
+    assert.deepEqual(flowStates(s), ["done", "done", "done", "done", "done"]);
+  });
+  it("moves virtual balances atomically at purchase and by the full face amount at repayment", () => {
+    const at = (stage: (typeof STAGES)[number]) => ledger({ ...initialTour(), stage });
+    assert.deepEqual([at("OFFERED").holder, at("OFFERED").balances.supplier, at("OFFERED").balances.bank], ["supplier", 0n, 10_000_000n]);
+    assert.deepEqual([at("PURCHASED").holder, at("PURCHASED").balances.supplier, at("PURCHASED").balances.bank], ["bank", 2_970_000n, 7_030_000n]);
+    assert.deepEqual([at("REPAID").balances.buyer, at("REPAID").balances.bank], [2_000_000n, 10_030_000n]);
+    const total = (l: ReturnType<typeof ledger>) => l.balances.supplier + l.balances.bank + l.balances.buyer;
+    assert.equal(total(at("NEW")), total(at("REPAID")), "simulated tokens are conserved");
+    assert.equal(at("REQUESTED").holder, null);
+  });
+});

@@ -13,7 +13,7 @@ export function ErrorBox({ code, text, onRetry }: { code?: string | null; text?:
   return (<div className="alert alert-bad" role="alert"><span>{text ?? errorMessage(code)}</span>
     {onRetry && <button type="button" className="btn btn-small" onClick={onRetry}>다시 시도</button>}</div>);
 }
-export const Notice = ({ tone = "info", children }: { tone?: "info" | "wait" | "good" | "bad"; children: React.ReactNode }) => <div className={`alert alert-${tone}`}>{children}</div>;
+export const Notice = ({ tone = "info", children }: { tone?: "info" | "wait" | "good" | "bad"; children: React.ReactNode }) => <div className={`alert alert-${tone}`}><span>{children}</span></div>;
 export function Card({ title, aside, children, tone }: { title?: React.ReactNode; aside?: React.ReactNode; children: React.ReactNode; tone?: "accent" }) {
   return (<section className={`card${tone ? ` card-${tone}` : ""}`}>{(title || aside) && <header className="card-head"><h2>{title}</h2>{aside}</header>}{children}</section>);
 }

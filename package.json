@@ -33,7 +33,8 @@
     "e2e:web": "npm run e2e -w @paidahead/web",
     "stack": "node --env-file-if-exists=.env scripts/stack.mjs",
     "testnet": "node scripts/testnet.mjs",
-    "e2e:clean": "npm run e2e:clean -w @paidahead/web"
+    "e2e:clean": "npm run e2e:clean -w @paidahead/web",
+    "e2e:tour": "npm run e2e:tour -w @paidahead/web"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox-viem": "5.0.7",

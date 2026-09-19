@@ -9,7 +9,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --experimental-strip-types --test test/*.test.ts",
     "e2e": "node --env-file-if-exists=../../.env e2e/run.mjs",
-    "e2e:clean": "node --env-file-if-exists=../../.env e2e/cleanup.mjs"
+    "e2e:clean": "node --env-file-if-exists=../../.env e2e/cleanup.mjs",
+    "e2e:tour": "node e2e/tour.mjs"
   },
   "dependencies": {
     "@paidahead/domain": "0.1.0",

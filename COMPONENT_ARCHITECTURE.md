@@ -235,3 +235,25 @@ sequenceDiagram
 ```
 
 API 해시 통지가 누락되어도 워커의 로그 스캔으로 복구한다. 프론트는 [연동 API 명세](apps/api/SETTLEMENT.md)의 payload를 사용하며 참여자 서명키는 서버에 전달하지 않는다.
+
+
+## 후속 구조: 고객 인증·지갑 UX (2026-09-20)
+
+[고객 인증·지갑 UX 설계](WALLET_UX_DESIGN.md)가 기준이다. 현재 EOA 경로는 유지한다. 화면에서는 하단 시연 지갑 설정과 기술 상세를 접고 거래 시점에 연결을 안내한다. 아래 모듈은 **미구현 제안**이며 현재 내장 지갑·실제 로그인·대납이 존재한다는 뜻이 아니다.
+
+| 제안 책임 | 경계 |
+|---|---|
+| Identity & Membership | 실제 인증, 조직 승인·소속·역할 검사. 시연 역할 쿠키와 분리 |
+| Transaction Confirmation | 금액·차액·상대방·채권·사용 승인 한도를 먼저 표시, 거래별 패스키 확인과 불변 intent 결합 |
+| Account Adapter | EOA / 스마트 계정 구분, 조직 바인딩·키 정책 버전, 사용자 서명 요청. 서버 단독 자산 이동 금지 |
+| Institution Signer Adapter | 은행 승인자/실행자 분리, 기관 관리 서명과 금액별 승인 정책. 등록자 키와 분리 |
+| Execution Adapter | EOA tx.from/to/input 검증 유지. AA의 EntryPoint·userOpHash·sender·실행 내용·업무 이벤트 연결 검증 |
+| Sponsorship Policy | 허용 호출·금액·gas/예산·요청률·nonce/만료 검사와 비용 예약/정산. 원금 대납과 구분 |
+| Recovery Coordinator | 조직 검토·유예·통지·이의제기·온체인 권한 변경 증거. API 동결과 체인 동결 상태 구분 |
+| Chain Sync | AA/EOA의 실행 증거를 같은 업무 확정 규칙으로 투영, 멱등성·새로고침 복구·재구성 처리 |
+
+목표 경로는 웹의 조건 확인 → 인증·업무 권한 검사 → 사용자 거래별 서명 → 검증된 bundler/EntryPoint → 스마트 계정 → Settlement → 검증 워커 → DB → 완료 화면이다. 대납 어댑터는 사용자 승인 대신 서명하지 않으며 AI와 등록 워커에도 그 권한을 주지 않는다.
+
+현재 `apps/worker/src/settlement.ts`의 receipt.from/tx.from/to/input 대조와 `apps/api/src/banking.ts`의 EOA 네이티브 가스 점검은 AA에 그대로 적용할 수 없다. outer tx 발신자는 bundler일 수 있고 동일 거래에 복수 UserOperation이 포함될 수 있다. 정확한 실행·업무 이벤트 연결을 검증하는 어댑터를 먼저 추가해야 한다. `Settlement.sol`의 msg.sender가 승인 스마트 계정인지도 확인해야 하며, 검증을 단순 제거하는 전환은 금지한다.
+
+계약 메시지 서명을 사용하는 기능은 ERC-1271을 검토한다. 체인/EntryPoint/계정 구현·패스키 검증·bundler/paymaster 제공자 호환성은 미확정이다. 관련 표준과 PoC 게이트는 중심 문서에 명시했다. 원래 개략 도식의 EOA 직접 제출 경로는 현재 시연을 설명하며, 새 구조가 이미 배포된 것으로 해석하지 않는다.

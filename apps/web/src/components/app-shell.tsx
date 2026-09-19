@@ -22,10 +22,11 @@ export function AppShell({ role: required, children }: { role?: Role; children: 
   return (<><DemoBanner />
     <header className="top"><div className="top-inner">
       <Link href={ROLE_HOME[role]} className="brand">사장님 <b>먼저받기</b></Link>
-      <div className="who"><span className={`role role-${role}`}>{ROLE_NAME[role]} · 시연 계정</span><span className="org">{session.me.organization.display_name}</span>
-        <button type="button" className="link" onClick={async () => { await session.logout(); router.push("/"); }}>로그아웃</button></div>
+      <div className={`who who-${role}`} aria-label="현재 로그인한 조직 구분"><strong>{ROLE_NAME[role]}</strong>
+        <span><span className="demo-tag">시연 계정</span> {session.me.organization.display_name}</span></div>
+      <button type="button" className="logout" data-testid="logout" onClick={async () => { await session.logout(); router.push("/"); }}>로그아웃</button>
     </div><RoleTabs role={role} path={path} /></header>
-    <div className="page"><WalletBar /><main>{children}</main></div></>);
+    <div className="page"><main>{children}</main><details className="card technical-details" data-testid="demo-settings"><summary>시연 설정 · 지갑과 네트워크</summary><p className="muted">시연용 연결 상태를 확인하거나 계정을 변경할 때 여세요. 거래에 필요한 연결은 해당 화면에서도 안내합니다.</p><WalletBar /></details></div></>);
 }
 
 /** Large tabs: each shows how many items need THIS organization's action (colored badge) and how many are waiting on others. */

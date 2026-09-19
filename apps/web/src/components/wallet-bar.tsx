@@ -30,3 +30,22 @@ export function WalletBar() {
       {!w.onExpectedChain && <Button onClick={() => w.switchChain()}>네트워크 전환</Button>}
       <Button variant="ghost" onClick={() => w.disconnect()}>연결 해제</Button></div></div>);
 }
+
+/** Connection is offered at the point of signing; it is not identity verification. */
+export function SigningWallet({ expectedFrom, disabled = false }: { expectedFrom: string; disabled?: boolean }) {
+  const w = useWallet();
+  if (!w.expected) return <p role="alert">시연 거래 환경을 준비하지 못했습니다. 잠시 후 다시 시도해 주세요.</p>;
+  const mismatch = w.address?.toLowerCase() !== expectedFrom.toLowerCase();
+  return <div className="signing-wallet" data-testid="signing-wallet">
+    {w.status !== "connected" ? <>
+      <p><strong>이 단계에서 시연 지갑 연결이 필요해요</strong><br />현재 시연은 브라우저 지갑에서 거래를 직접 승인합니다. 지갑 연결은 로그인이나 본인 확인을 대신하지 않습니다.</p>
+      {w.available.length ? <div className="actions">{w.available.map((d) => <Button key={d.id} variant="secondary" disabled={disabled || w.status === "connecting"} busy={w.status === "connecting"} onClick={() => w.connect(d.id)}>{d.name} 연결</Button>)}</div>
+        : <p role="status">브라우저 지갑을 찾지 못했습니다. MetaMask 등 시연 계정을 가져온 지갑이 설치된 브라우저에서 열어 주세요.</p>}
+    </> : !w.onExpectedChain ? <>
+      <p role="alert">현재 연결된 네트워크에서는 진행할 수 없습니다. 시연 네트워크로 변경해 주세요.</p>
+      <Button disabled={disabled} onClick={() => w.switchChain()}>시연 네트워크로 변경</Button>
+    </> : mismatch || !w.matchesOrganization ? <p role="alert">현재 업체의 승인 지갑이 아닙니다. 지갑 앱에서 {shortAddress(expectedFrom)} 계정으로 바꿔 주세요.</p>
+      : <p>시연 지갑이 연결되었습니다. 아래 내용을 확인하고 지갑 창에서 승인해 주세요.</p>}
+    {w.failure && <p className="bad" role="alert">{walletFailureMessage[w.failure]}</p>}
+  </div>;
+}

@@ -8,7 +8,8 @@
     "build": "next build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --experimental-strip-types --test test/*.test.ts",
-    "e2e": "node --env-file-if-exists=../../.env e2e/run.mjs"
+    "e2e": "node --env-file-if-exists=../../.env e2e/run.mjs",
+    "e2e:clean": "node --env-file-if-exists=../../.env e2e/cleanup.mjs"
   },
   "dependencies": {
     "@paidahead/domain": "0.1.0",
@@ -16,7 +17,8 @@
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "0.0.1",
-    "viem": "2.56.8"
+    "viem": "2.56.8",
+    "@paidahead/database": "0.1.0"
   },
   "devDependencies": {
     "@types/react": "19.3.0",

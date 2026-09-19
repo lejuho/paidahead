@@ -51,8 +51,11 @@ export default function ReceivableDetail({ params }: { params: Promise<{ id: str
       <p className="muted">모의 토큰 지급이며 실제 원화 지급이 아닙니다. 차액은 예시이며 금리·수수료가 아닙니다.</p></Card>)}
 
     {role === "buyer" && (r.chain_status === "PURCHASED" ? (<Card title="전액 상환" tone="accent">
-        <Facts items={[["상환 금액", formatKrw(r.face_amount)], ["수취 기관", `${r.bank_name} (${shortAddress(r.bank_address)})`], ["사용 토큰", "모의 결제 토큰 (mKRW, 시연용)"], ["서명 지갑", shortAddress(r.payer_address)]]} />
-        <p className="muted">매입 당시 금액이 아닌 액면 전액을 상환합니다. 토큰 사용 승인 → 상환 거래 순서로 서명합니다.</p>
+        <Facts items={[["모의 상환 금액", `${formatKrw(r.face_amount)} 상당 (모의)`], ["수취 기관", r.bank_name]]} />
+        <p className="muted">매입 당시 금액이 아닌 액면 전액을 상환합니다. 모의 토큰 거래이며 실제 은행 계좌에서 출금되지 않습니다. 토큰 사용 승인 → 상환 거래 순서로 서명합니다.</p>
+        <details className="technical-details" data-testid="repayment-wallet-details"><summary>상환 지갑·토큰 상세</summary>
+          <Facts items={[["수취 지갑", shortAddress(r.bank_address)], ["사용 토큰", "모의 결제 토큰 (mKRW, 시연용)"], ["서명 지갑", shortAddress(r.payer_address)]]} />
+        </details>
         <div className="actions"><Button onClick={() => tx.start("REPAY")} disabled={tx.open} busy={tx.phase === "preparing"} data-testid="start-repay">모의 상환 시작</Button></div></Card>)
       : r.chain_status === "REPAID" ? <Notice tone="good">{formatDateTime(r.repaid_at)} 액면 전액을 상환해 채권이 종결되었습니다.</Notice>
       : r.chain_status === "REGISTERED" ? <Notice>아직 은행이 매입하지 않은 채권입니다. 매입 전에는 상환 대상이 아닙니다.</Notice> : null)}
@@ -63,9 +66,9 @@ export default function ReceivableDetail({ params }: { params: Promise<{ id: str
     {role !== "bank" && r.bankReview && <Card title="은행 검토 상태" aside={<Chip label={reviewLabel(r.bankReview.status)} />}>
       {r.bankReview.public_message && ["NEEDS_INFO", "DECLINED"].includes(r.bankReview.status) ? <p>은행 안내: {r.bankReview.public_message}</p> : <p className="muted">은행의 내부 검토 내용은 공개되지 않습니다. 공개 결과만 표시됩니다.</p>}</Card>}
 
-    <Card title="조건(오퍼) 이력">{r.offers.length ? <div className="table-wrap"><table className="table"><thead><tr><th>매입 금액</th><th>유효기간</th><th>상태</th><th>등록 거래</th></tr></thead><tbody>
+    <details className="card technical-details" data-testid="offer-history"><summary>이전 조건과 등록 기록 보기</summary>{r.offers.length ? <div className="table-wrap"><table className="table"><thead><tr><th>매입 금액</th><th>유효기간</th><th>상태</th><th>등록 거래</th></tr></thead><tbody>
       {r.offers.map((o) => <tr key={o.id}><td>{formatKrw(o.purchase_amount)}</td><td>{formatDateTime(o.expires_at)}</td><td><Chip label={offerLabel(o.effective_status)} />{!o.approval_id && " · 미승인 참조"}</td>
-        <td className="mono" title={o.created_tx_hash}>{transactionLink(chain?.chainId, o.created_tx_hash) ? <a href={transactionLink(chain?.chainId, o.created_tx_hash)!} target="_blank" rel="noreferrer">{shortHash(o.created_tx_hash)}</a> : shortHash(o.created_tx_hash)}</td></tr>)}</tbody></table></div> : <p className="muted">등록된 조건이 없습니다.</p>}</Card>
+        <td className="mono" title={o.created_tx_hash}>{transactionLink(chain?.chainId, o.created_tx_hash) ? <a href={transactionLink(chain?.chainId, o.created_tx_hash)!} target="_blank" rel="noreferrer">{shortHash(o.created_tx_hash)}</a> : shortHash(o.created_tx_hash)}</td></tr>)}</tbody></table></div> : <p className="muted">등록된 조건이 없습니다.</p>}</details>
 
     <details className="card"><summary>온체인 기록 · 상세</summary>
       <Facts items={[["토큰 ID", <span key="t" className="mono">{shortHash(r.token_id)}</span>], ["등록 거래", <span key="h" className="mono" title={r.registration_tx_hash ?? ""}>{shortHash(r.registration_tx_hash)}</span>],

@@ -250,3 +250,24 @@ erDiagram
 - `settlement_cursor`: 원자적 반영 마지막 블록 번호·해시. 등록 경로의 `chain_operation`·`chain_transaction`·`chain_event`와 별도로 관리한다.
 
 AI·실제 인증·추가 파일 저장·분쟁 모델 등 목표 설계의 모든 테이블을 구현한 것은 아니다.
+
+
+## 13. 후속 설계: 인증·지갑 확장(미구현)
+
+[고객 인증·지갑 UX 설계](WALLET_UX_DESIGN.md)에 따른 **제안 필드/테이블**이다. 현재 migration에 추가한 것이 아니다. 위 목표 ERD와 현재 `wallet_operation`/`settlement_event`의 차이를 확인해 실제 migration을 별도로 설계한다.
+
+| 제안 대상 | 필드·관계 | 제약 |
+|---|---|---|
+| `auth_credential` | user_id, provider_reference 또는 credential_id/public_key, status, registered_at, revoked_at | 공개 식별정보만; 개인키·생체정보·복구 비밀 제외 |
+| `wallet_binding` 확장 | account_kind, provider_reference?, binding_version, key_policy_version, status, frozen_at? | 조직·chain·주소 고정. 주소 변경은 신규 binding; 과거 FK 덮어쓰기 금지 |
+| `wallet_binding_revision` | binding_id, version, policy_hash, reason, actor_id, effective_at?, chain_evidence? | UNIQUE(binding_id, version), 추가만 허용. 온체인 반영 전 effective 처리 금지 |
+| `transaction_authorization` | wallet_operation_id, requester_id, approver_id, membership_id, binding_id/version, intent_hash, nonce, expires_at, authenticated_at, consumed_at? | 불변 업무/실행 내용과 연결, 만료/재사용 차단. 기관 복수 승인은 승인자별 행 |
+| `account_execution` | wallet_operation_id, execution_kind, chain_id, entry_point?, entry_point_version?, account_address, user_op_hash?, nonce, call_hash, status, tx_hash?, block_hash? | AA UNIQUE(chain_id, entry_point, user_op_hash), outer tx와 userOp를 분리. 같은 outer tx 여러 행 허용 |
+| `execution_event_link` | execution_id, settlement_event_id, verification_evidence_hash, canonical | 검증된 실행과 업무 이벤트의 연결; tx_hash 일치만으로 연결하지 않음 |
+| `sponsorship_reservation` | execution_id, policy_version, organization_id, budget_period, max_cost, reserved_cost, actual_cost?, status, expires_at | 원자적 예산 예약·멱등 정산, 실패/만료 회수 시 제출 상태 재확인 |
+| `wallet_recovery_request` | binding_id, requester_id, status, requested_at, reviewed_by?, applied_by?, not_before?, old/new_policy_hash, effective_operation_id?, reason | 검토자/적용자 분리, 설정 없는 유예 자동 생략 금지 |
+| `recovery_audit_event` | recovery_id, actor_id?, action, notification_reference?, chain_evidence?, created_at | 추가만 허용; 통지 시도와 실제 전달 결과 구분 |
+
+operation·authorization·execution은 같은 조직·binding·업무 버전인지 FK/서버 잠금으로 검사한다. 실행 종류별 필수 필드는 CHECK로 강제한다. 기존 이벤트 유일성 및 블록 재구성 처리는 유지하고 이벤트→실행 연결도 canonical 상태에 따라 재검증한다. 상태 투영과 작업 확정은 한 DB 트랜잭션으로 처리한다.
+
+신규 주소 전환은 기존 채권·오퍼·상환의 wallet 참조를 바꾸지 않는다. 스마트 계정의 동일 주소 키 교체도 정책 revision과 실제 온체인 반영 증거가 있어야 한다. API 동결과 온체인 동결은 별도 상태로 저장하며 이미 제출된 거래를 삭제하지 않는다.

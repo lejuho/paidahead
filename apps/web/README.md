@@ -133,7 +133,7 @@ npm run check      # 빌드(웹 포함)·타입 검사·도메인 3 + 웹 7 + AP
 npm run e2e:web    # 위 1번 스택이 실행 중일 때: 실제 API·PostgreSQL·로컬 EVM + 헤드리스 Chromium 14단계
 ```
 
-`e2e:web`은 `apps/web/e2e/test-wallet.mjs`의 **자동화 전용 EIP-1193 지갑**(EIP-6963로 주입, Node에서 Hardhat 공개 키로 서명, loopback 전용)을 쓴다. 이 지갑은 웹 번들에 포함되지 않는다. 시작할 때 은행·구매처 모의 토큰 잔액과 allowance를 0으로 되돌려 "부족" 시나리오를 매번 재현한다. 스크린샷은 `apps/web/e2e-output/`에 남는다. Chromium 실행에 시스템 라이브러리(libnss3, libnspr4, libasound2)가 필요하다: `npx playwright install --with-deps chromium`.
+`e2e:web`은 `apps/web/e2e/test-wallet.mjs`의 **자동화 전용 EIP-1193 지갑**(EIP-6963로 주입, Node에서 Hardhat 공개 키로 서명, loopback 전용)을 쓴다. 이 지갑은 웹 번들에 포함되지 않는다. 시작할 때 은행·구매처 모의 토큰 잔액과 allowance를 0으로 되돌려 "부족" 시나리오를 매번 재현한다. 테스트가 만든 신청은 제목이 `E2E … [실행코드]` 형식이며, **전 단계가 통과하면 그 실행의 DB 기록을 자동 삭제**한다(실패 시 또는 `--keep`/`E2E_KEEP=1`이면 디버깅용으로 남긴다). 남은 테스트 데이터는 `npm run e2e:clean`으로 모두 지운다. 정리는 loopback 시연 DB의 superuser 연결에서만 동작하고 제목이 `E2E `로 시작하는 신청만 건드린다. 스크린샷은 `apps/web/e2e-output/`에 남는다. Chromium 실행에 시스템 라이브러리(libnss3, libnspr4, libasound2)가 필요하다: `npx playwright install --with-deps chromium`.
 
 검증 범위: 권한 불일치(역할 화면·API 403), 반려→새 버전→철회, 중복 제출 1건, 구매처 확인→등록, 은행 보완·승인(내부 메모 비노출), 네트워크 불일치·전환, 조직-지갑 불일치 시 미전송, allowance 승인→서명 거절→재시도→더블클릭 1건, 오퍼 철회·재등록, 은행 잔액 부족 차단→충전 후 매입, 해시 통지 실패+새로고침 복구, 구매처 잔액 부족→승인→상환 중 새로고침→REPAID, 매입 불가→등록 취소, 모바일 폭 넘침 없음.
 

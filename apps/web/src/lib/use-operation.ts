@@ -178,8 +178,8 @@ export function useOperation(receivableId: string, onSettled: () => void) {
     start, approve, send, abandon, dismiss, recheck: () => lock(async () => { if (operation) await check(operation); }) };
 }
 export const blockerMessage: Record<Blocker, string> = {
-  NONE: "", NEEDS_APPROVAL: "결제 계약이 모의 토큰을 가져갈 수 있도록 먼저 ‘토큰 사용 승인’ 거래가 필요합니다.",
+  NONE: "", NEEDS_APPROVAL: "지갑에서 두 번 승인해야 합니다. 먼저 표시된 모의 금액의 사용을 허용하고, 다음으로 실제 거래를 승인합니다. 첫 승인만으로 매입이나 상환이 완료되지는 않습니다.",
   INSUFFICIENT_BALANCE: "연결된 지갑의 모의 토큰 잔액이 부족합니다. 잔액을 채운 뒤 ‘다시 점검’을 누르세요.",
   FUNDER_NOT_READY: "은행 지갑의 모의 토큰 잔액 또는 사용 승인이 부족해 지금은 매입이 실행되지 않습니다. 은행 역할에서 잔액·승인을 준비한 뒤 다시 점검하세요.",
-  INSUFFICIENT_GAS: "가스비로 쓸 네이티브 토큰이 부족합니다.", CONTRACT_REJECTED: "사전 점검에서 계약이 이 거래를 거절했습니다. 채권·오퍼 상태가 바뀌었는지 확인하고 다시 점검하세요.",
+  INSUFFICIENT_GAS: "거래 수수료로 쓸 시연 코인이 부족합니다. 시연 담당자가 잔액을 채운 뒤 다시 점검해 주세요.", CONTRACT_REJECTED: "사전 점검에서 계약이 이 거래를 거절했습니다. 채권·오퍼 상태가 바뀌었는지 확인하고 다시 점검하세요.",
 };

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { formatKrw, formatTokenRaw, krwDifference, localInputToIso, multiplyKrw, normalizeKrwInput } from "../src/lib/format.ts";
-import { blockerOf, deriveSteps, isBusinessComplete, isOpen } from "../src/lib/tx-state.ts";
+import { blockerOf, customerProgress, deriveSteps, isBusinessComplete, isOpen } from "../src/lib/tx-state.ts";
 import { classifyWalletError } from "../src/lib/wallet-errors.ts";
 import { applicationStage } from "../src/features/stage.ts";
 import { applicationBucket, bankReceivable, buyerReceivable, reviewBucket, supplierReceivable } from "../src/features/todo.ts";
@@ -105,5 +105,19 @@ describe("whose move is it", () => {
   it("formats recent activity relatively", () => {
     const now = Date.parse("2026-09-19T12:00:00Z"), ago = (m: number) => new Date(now - m * 60000).toISOString();
     assert.deepEqual([0, 5, 125, 1500, 4320].map((m) => relativeTime(ago(m), now)), ["방금", "5분 전", "2시간 전", "어제", "3일 전"]);
+  });
+});
+
+describe("customer status preserves settlement truth when technical details are hidden", () => {
+  it("waits for the server projection even with a successful chain receipt", () => {
+    for (const server of ["AWAITING_SIGNATURE", "PENDING"] as const) {
+      const status = customerProgress({ server, phase: "idle", hasHash: true, receipt: "success" });
+      assert.match(status, /결과를 확인/);
+      assert.doesNotMatch(status, /처리가 완료되었습니다/);
+    }
+    assert.match(customerProgress({ server: "CONFIRMED", phase: "idle", hasHash: true }), /처리가 완료되었습니다/);
+    assert.match(customerProgress({ server: "FAILED", phase: "idle", hasHash: true }), /완료하지 못했습니다/);
+    assert.match(customerProgress({ server: "USER_REJECTED", phase: "idle", hasHash: false }), /취소했습니다/);
+    assert.match(customerProgress({ server: "AWAITING_SIGNATURE", phase: "approving", hasHash: false }), /1단계 사용 승인/);
   });
 });

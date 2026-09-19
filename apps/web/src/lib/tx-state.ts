@@ -38,3 +38,15 @@ export function blockerOf(kind: string, sender: string, preflight: { simulation:
   if (preflight.sufficientGasBalance === false) return "INSUFFICIENT_GAS";
   return "NONE";
 }
+
+/** Plain-language status remains visible even when technical progress is collapsed. */
+export function customerProgress(p: Progress): string {
+  if (p.server === "CONFIRMED") return "처리가 완료되었습니다. 거래 결과가 서비스에 반영되었습니다.";
+  if (p.server === "FAILED") return "거래를 완료하지 못했습니다. 현재 상태를 확인한 뒤 다시 시도해 주세요.";
+  if (p.server === "USER_REJECTED") return "요청을 취소했습니다. 진행하려면 새 요청을 시작해 주세요.";
+  if (p.server === "PENDING" || p.hasHash) return "거래를 보냈습니다. 최종 결과를 확인하고 있으니 완료 안내를 기다려 주세요.";
+  if (p.phase === "approving") return "1단계 사용 승인을 처리하고 있습니다. 지갑에서 승인한 뒤 결과를 기다려 주세요.";
+  if (p.phase === "wallet") return "지갑 창에서 이번 거래 내용을 확인하고 승인해 주세요.";
+  if (p.phase === "preparing" || p.phase === "checking") return "진행할 수 있는지 확인하고 있습니다.";
+  return "아래 내용을 확인한 뒤 진행해 주세요.";
+}

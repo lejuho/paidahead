@@ -9,6 +9,7 @@ import { chromium } from "playwright";
 import { createPublicClient, createWalletClient, http, parseAbi } from "viem";
 import { mnemonicToAccount } from "viem/accounts";
 import { attachTestWallet, HARDHAT_INDEX } from "./test-wallet.mjs";
+import { cleanupE2E } from "./cleanup.mjs";
 
 const WEB = process.env.WEB_URL ?? "http://127.0.0.1:3000";
 const RPC = process.env.REGISTRATION_RPC_URL ?? "http://127.0.0.1:8545";
@@ -24,7 +25,7 @@ const fund = (only) => execFileSync(process.execPath, ["--env-file-if-exists=.en
 const t = (id) => `[data-testid="${id}"]`;
 const LONG = { timeout: 60000 };
 const RUN = Date.now().toString(36).slice(-5); // the demo DB persists between runs, so titles are unique per run
-const MAIN = `E2E 식자재 납품 300만원 ${RUN}`;
+const MAIN = `E2E 식자재 납품 300만원 [${RUN}]`;
 
 // Fixture reset: earlier runs leave mock-token balances/allowances behind, which would hide the "insufficient" scenarios.
 async function resetTokenState(chain) {
@@ -49,10 +50,19 @@ async function actor(role, viewport) {
   const page = await context.newPage();
   page.setDefaultTimeout(20000);
   page.on("dialog", (dialog) => dialog.accept());
-  await page.goto(WEB); await page.click(t(`enter-${role}`)); await page.waitForSelector(t("wallet-bar"));
+  await page.goto(WEB); await page.click(t(`enter-${role}`)); await page.waitForSelector(t("demo-settings"));
   return { role, page, wallet, shot: (name) => page.screenshot({ path: `${out}${name}.png`, fullPage: true }) };
 }
-const connect = async (a) => { await a.page.click(`${t("wallet-bar")} button:has-text("연결")`); await a.page.waitForSelector(t("wallet-address")); };
+const connect = async (a) => {
+  if (await a.page.locator(t("signing-wallet")).isVisible()) {
+    await a.page.click(`${t("signing-wallet")} button:has-text("연결")`);
+    await a.page.waitForSelector(`${t("signing-wallet")}:has-text("시연 지갑이 연결되었습니다")`);
+  } else {
+    await a.page.click(`${t("demo-settings")} > summary`);
+    await a.page.click(`${t("wallet-bar")} button:has-text("연결")`);
+    await a.page.waitForSelector(t("wallet-address"));
+  }
+};
 const confirmed = (a) => a.page.waitForSelector(`${t("tx-panel")}[data-status="CONFIRMED"]`, LONG);
 const chainSends = (a) => a.wallet.state.sent.length;
 
@@ -67,7 +77,9 @@ try {
 
   await step("역할 선택 화면과 시연 모드 표시", async () => {
     assert.match(await supplier.page.textContent(".demo-banner"), /시연 모드/);
-    assert.match(await supplier.page.textContent(".who"), /납품업체 · 시연 계정/);
+    assert.match(await supplier.page.textContent(".who"), /납품업체.*시연 계정/);
+    assert.equal(await supplier.page.locator(t("wallet-bar")).isVisible(), false, "technical wallet settings start collapsed");
+    assert.equal(await supplier.page.locator(t("signing-wallet")).count(), 0, "ordinary work needs no wallet prompt");
   });
   await step("권한 불일치: 구매처 세션은 납품업체 화면·API에 접근 불가", async () => {
     await buyer.page.goto(`${WEB}/applications`); await buyer.page.waitForURL("**/confirmations");
@@ -80,15 +92,15 @@ try {
 
   await step("반려 → 보완 새 버전 → 철회 흐름", async () => {
     const p = supplier.page;
-    await p.goto(`${WEB}/applications/new`); await p.fill('input[maxlength="200"]', `E2E 반려·철회 ${RUN}`); await p.click(t("application-submit"));
+    await p.goto(`${WEB}/applications/new`); await p.fill('input[maxlength="200"]', `E2E 반려·철회 [${RUN}]`); await p.click(t("application-submit"));
     await p.click(t("complete-review")); await p.check(t("consent")); await p.click(t("request-confirmation")); await p.waitForSelector(t("withdraw-confirmation"));
-    await buyer.page.goto(`${WEB}/confirmations`); await buyer.page.click(`${t("confirmation-row")}:has-text("E2E 반려·철회 ${RUN}")`);
+    await buyer.page.goto(`${WEB}/confirmations`); await buyer.page.click(`${t("confirmation-row")}:has-text("E2E 반려·철회 [${RUN}]")`);
     await buyer.page.click(t("reject-open")); await buyer.page.fill(t("reject-reason"), "수량 확인 필요"); await buyer.page.click(t("reject"));
     await buyer.page.waitForSelector("text=반려했습니다");
     await p.waitForSelector("text=반려 사유: 수량 확인 필요"); await p.click(t("revise")); await p.click(t("application-submit"));
     await p.click(t("complete-review")); await p.check(t("consent")); await p.click(t("request-confirmation"));
     await p.click(t("withdraw-confirmation")); await p.waitForSelector("text=확인 요청을 철회했습니다");
-    await buyer.page.goto(`${WEB}/confirmations`); await buyer.page.click(".group-done summary"); await buyer.page.waitForSelector(`${t("confirmation-row")}:has-text("E2E 반려·철회 ${RUN}"):has-text("요청 철회")`);
+    await buyer.page.goto(`${WEB}/confirmations`); await buyer.page.click(".group-done summary"); await buyer.page.waitForSelector(`${t("confirmation-row")}:has-text("E2E 반려·철회 [${RUN}]"):has-text("요청 철회")`);
   });
 
   await step("신청 → 서류 검토 → 구매처 확인 요청 (중복 클릭 1건만 생성)", async () => {
@@ -169,11 +181,14 @@ try {
     await p.goto(`${WEB}/receivables`); await p.waitForSelector(`${t("tab-receivables")} .pill-action:not(.pill-zero)`);
     await p.click(`${t("group-action")} ${t("receivable-row")}:has-text("${MAIN}"):has-text("먼저받기")`);
     await p.waitForSelector(t("start-accept")); assert.match(await p.textContent(t("offer-amount")), /2,970,000원/); await supplier.shot("06-supplier-offer-mobile");
-    await connect(supplier); await p.click(t("start-accept"));
+    await p.click(t("start-accept"));
+    await p.waitForSelector(t("signing-wallet"));
+    assert.equal(await p.isDisabled(t("tx-send")), true, "signing waits for inline wallet connection");
+    await connect(supplier);
     await p.waitForSelector(`${t("tx-blocker")}[data-blocker="FUNDER_NOT_READY"]`); assert.equal(await p.isDisabled(t("tx-send")), true);
     fund("bank"); await p.click(t("tx-recheck")); await p.waitForSelector(t("tx-blocker"), { state: "detached" });
     await p.route("**/api/backend/operations/*/transaction", (route) => route.abort()); // the hash never reaches the API
-    await p.click(t("tx-send")); await p.waitForSelector(t("tx-hash")); assert.equal(chainSends(supplier), 1);
+    await p.click(t("tx-send")); await p.waitForSelector(t("tx-hash"), { state: "attached" }); assert.equal(chainSends(supplier), 1);
     await p.unroute("**/api/backend/operations/*/transaction"); await p.reload();
     // After the reload the UI must not claim completion from the hash: it shows the server record until the worker confirms.
     await p.waitForSelector("text=모의 지급 완료", LONG); await p.waitForSelector("text=매입 완료 · 상환 대기");
@@ -183,11 +198,11 @@ try {
   await step("구매처 상환: 잔액 부족 → 충전 → 사용 승인 → 상환 전송 중 새로고침 → REPAID", async () => {
     const p = buyer.page;
     await p.goto(`${WEB}/repayments`); await p.click(`${t("receivable-row")}:has-text("${MAIN}")`);
-    await connect(buyer); await p.click(t("start-repay"));
+    await p.click(t("start-repay")); await p.waitForSelector(t("signing-wallet")); await connect(buyer);
     await p.waitForSelector(`${t("tx-blocker")}[data-blocker="INSUFFICIENT_BALANCE"]`); await buyer.shot("08-buyer-insufficient-mobile");
     fund("buyer"); await p.click(t("tx-recheck")); await p.waitForSelector(`${t("tx-blocker")}[data-blocker="NEEDS_APPROVAL"]`);
     await p.click(t("tx-approve")); await p.waitForSelector(t("tx-blocker"), { state: "detached", ...LONG });
-    await p.click(t("tx-send")); await p.waitForSelector(t("tx-hash")); await p.reload();
+    await p.click(t("tx-send")); await p.waitForSelector(t("tx-hash"), { state: "attached" }); await p.reload();
     await p.waitForSelector("text=액면 전액을 상환해 채권이 종결되었습니다", LONG);
     assert.equal(chainSends(buyer), 2); await buyer.shot("09-buyer-repaid-mobile");
   });
@@ -201,7 +216,7 @@ try {
     assert.equal(Object.keys(HARDHAT_INDEX).length, 3);
   });
   await step("매입 불가(공개 사유) → 납품업체 등록 취소 거래 → CANCELLED", async () => {
-    const p = supplier.page, title = `E2E 매입 불가·취소 ${RUN}`;
+    const p = supplier.page, title = `E2E 매입 불가·취소 [${RUN}]`;
     await p.goto(`${WEB}/applications/new`); await p.fill('input[maxlength="200"]', title); await p.click(t("application-submit"));
     await p.click(t("complete-review")); await p.check(t("consent")); await p.click(t("request-confirmation")); await p.waitForSelector(t("withdraw-confirmation"));
     await buyer.page.goto(`${WEB}/confirmations`); await buyer.page.click(`${t("confirmation-row")}:has-text("${title}")`);
@@ -213,7 +228,7 @@ try {
     assert.equal(await bank.page.locator(t("approve-terms")).count(), 0, "no terms can be approved after a decline");
     await p.waitForSelector("text=은행 안내: 이번에는 매입이 어렵습니다"); assert.doesNotMatch(await p.textContent("main"), /내부 한도 초과/);
     const before = chainSends(supplier);
-    await p.click("summary"); await p.click(t("start-cancel")); await p.waitForFunction((sel) => !document.querySelector(sel)?.disabled, t("tx-send"));
+    await p.locator("details").filter({ has: p.locator(t("start-cancel")) }).locator("summary").click(); await p.click(t("start-cancel")); await p.waitForFunction((sel) => !document.querySelector(sel)?.disabled, t("tx-send"));
     await p.click(t("tx-send")); await p.waitForSelector("text=등록 취소", LONG); await p.waitForSelector(`${t("tx-panel")}[data-status="CONFIRMED"]`, LONG);
     assert.equal(chainSends(supplier), before + 1);
   });
@@ -223,5 +238,9 @@ try {
     assert.equal(await mobileBank.page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), true); await mobileBank.shot("11-bank-queue-mobile");
   });
 } catch (error) { failed = true; if (!results.some((r) => !r.ok)) console.error(error); } finally { await browser.close(); }
+// Passing runs leave no test data behind. Failed runs (or --keep / E2E_KEEP=1) keep it for debugging; `npm run e2e:clean` removes it later.
+if (!failed && !process.argv.includes("--keep") && process.env.E2E_KEEP !== "1") {
+  try { console.log(`  · 테스트 데이터 정리: 신청 ${await cleanupE2E(RUN)}건 삭제 (유지하려면 --keep)`); } catch (error) { console.error(`  · 테스트 데이터 정리 실패: ${error.message}`); }
+}
 console.log(`\n${results.filter((r) => r.ok).length}/${results.length} steps passed${failed ? " — FAILED" : ""}. Screenshots: apps/web/e2e-output/`);
 process.exit(failed ? 1 : 0);

@@ -11,3 +11,5 @@ coverage/
 next-env.d.ts
 *.tsbuildinfo
 e2e-output/
+
+.next-testnet/

@@ -1,6 +1,7 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { createPublicClient, createWalletClient, custom, defineChain, getAddress, numberToHex, type Address, type EIP1193Provider } from "viem";
+import { createPublicClient, createWalletClient, custom, getAddress, numberToHex, type Address, type EIP1193Provider } from "viem";
+import { walletChain } from "./chain-config";
 import { paymentAbi } from "@paidahead/domain";
 import { classifyWalletError, type WalletFailure } from "./wallet-errors";
 
@@ -19,8 +20,7 @@ interface WalletState {
 }
 const Context = createContext<WalletState | null>(null);
 const REMEMBER = "paidahead.wallet";
-const chainOf = (info: ChainInfo) => defineChain({ id: info.chainId, name: info.chainId === 31337 ? "PaidAhead 로컬 (Hardhat 31337)" : `EVM ${info.chainId}`,
-  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 }, rpcUrls: { default: { http: [info.rpcUrl] } } });
+const chainOf = walletChain;
 
 export function WalletProvider({ expected, organizationWallets, children }: { expected: ChainInfo | null; organizationWallets: { chain_id: string; address: string }[]; children: React.ReactNode }) {
   const [available, setAvailable] = useState<Discovered[]>([]);
@@ -103,7 +103,8 @@ export function WalletProvider({ expected, organizationWallets, children }: { ex
       catch (error) {
         if (classifyWalletError(error) !== "CHAIN_NOT_ADDED") throw error;
         await active.provider.request({ method: "wallet_addEthereumChain", params: [{ chainId: numberToHex(chain.id), chainName: chain.name,
-          nativeCurrency: chain.nativeCurrency, rpcUrls: [expected.rpcUrl] }] });
+          nativeCurrency: chain.nativeCurrency, rpcUrls: [expected.rpcUrl],
+          ...(chain.blockExplorers ? { blockExplorerUrls: [chain.blockExplorers.default.url] } : {}) }] });
       }
       const now = Number(await active.provider.request({ method: "eth_chainId" }));
       setChainId(now); return now === chain.id;

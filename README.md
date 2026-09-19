@@ -66,3 +66,7 @@ ABI와 타입은 `npm run build` 후 `contracts/artifacts`에 생성된다. `Rec
 - [Hardhat의 viem 테스트 안내](https://hardhat.org/docs/guides/testing/using-viem)
 - [OpenZeppelin ERC-721](https://docs.openzeppelin.com/contracts/5.x/erc721)
 - [Injective EVM 네트워크 정보](https://docs.injective.network/developers-evm/network-information)
+
+## Injective 테스트넷
+
+별도 지갑·DB·포트로 실행하는 절차는 [테스트넷 안내](TESTNET.md)를 참고한다. `npm run testnet -- status`로 연결과 잔액을 확인한다. 실제 배포 성공 여부는 `.local/testnet/deployment.json`과 온체인 영수증으로 확인한다.

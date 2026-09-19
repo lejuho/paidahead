@@ -37,7 +37,7 @@ async function registrationStatus() {
 }
 let registration = await registrationStatus();
 if (process.argv.includes("--wait-registration")) {
-  const deadline = Date.now() + 30000;
+  const deadline = Date.now() + Math.min(300000, Math.max(30000, Number(process.env.DEMO_WAIT_MS) || 30000));
   while (registration.status !== "CONFIRMED" && Date.now() < deadline) {
     if (registration.status === "FAILED") throw new Error(`Registration failed: ${registration.failure_code}`);
     await new Promise((resolve) => setTimeout(resolve, 500));

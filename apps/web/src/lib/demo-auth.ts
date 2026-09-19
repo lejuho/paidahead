@@ -1,4 +1,5 @@
 import "server-only";
+import { browserRpc } from "./chain-config";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
@@ -19,7 +20,7 @@ function loopback(url: string): string {
   return url.replace(/\/$/, "");
 }
 export const apiUrl = () => loopback(process.env.API_URL ?? `http://127.0.0.1:${process.env.API_PORT ?? 3003}`);
-export const rpcUrl = () => loopback(process.env.WEB_CHAIN_RPC_URL ?? process.env.REGISTRATION_RPC_URL ?? "http://127.0.0.1:8545");
+export const rpcUrl = () => browserRpc(process.env.WEB_CHAIN_RPC_URL ?? process.env.REGISTRATION_RPC_URL ?? "http://127.0.0.1:8545", process.env.PAIDAHEAD_NETWORK);
 export const isRole = (value: unknown): value is DemoRole => DEMO_ROLES.includes(value as DemoRole);
 
 export async function credentials(role: DemoRole): Promise<{ token: string; organizationId: string } | null> {

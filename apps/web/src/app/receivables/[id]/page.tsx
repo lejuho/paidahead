@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { transactionLink } from "@/lib/chain-config";
 import { use, useCallback, useState } from "react";
 import { api } from "@/lib/api";
 import { useSession } from "@/lib/session";
@@ -20,7 +21,7 @@ export interface ReceivableState { id: string; title: string; trade_reference: s
 
 export default function ReceivableDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { role } = useSession();
+  const { role, chain } = useSession();
   const detail = useLoad<ReceivableState>(`/receivables/${id}`, 4000);
   const reload = detail.reload;
   const tx = useOperation(id, useCallback(() => { void reload(); }, [reload]));
@@ -64,13 +65,13 @@ export default function ReceivableDetail({ params }: { params: Promise<{ id: str
 
     <Card title="조건(오퍼) 이력">{r.offers.length ? <div className="table-wrap"><table className="table"><thead><tr><th>매입 금액</th><th>유효기간</th><th>상태</th><th>등록 거래</th></tr></thead><tbody>
       {r.offers.map((o) => <tr key={o.id}><td>{formatKrw(o.purchase_amount)}</td><td>{formatDateTime(o.expires_at)}</td><td><Chip label={offerLabel(o.effective_status)} />{!o.approval_id && " · 미승인 참조"}</td>
-        <td className="mono" title={o.created_tx_hash}>{shortHash(o.created_tx_hash)}</td></tr>)}</tbody></table></div> : <p className="muted">등록된 조건이 없습니다.</p>}</Card>
+        <td className="mono" title={o.created_tx_hash}>{transactionLink(chain?.chainId, o.created_tx_hash) ? <a href={transactionLink(chain?.chainId, o.created_tx_hash)!} target="_blank" rel="noreferrer">{shortHash(o.created_tx_hash)}</a> : shortHash(o.created_tx_hash)}</td></tr>)}</tbody></table></div> : <p className="muted">등록된 조건이 없습니다.</p>}</Card>
 
     <details className="card"><summary>온체인 기록 · 상세</summary>
       <Facts items={[["토큰 ID", <span key="t" className="mono">{shortHash(r.token_id)}</span>], ["등록 거래", <span key="h" className="mono" title={r.registration_tx_hash ?? ""}>{shortHash(r.registration_tx_hash)}</span>],
         ["등록 시각", formatDateTime(r.registered_at)], ["납품업체 지갑", shortAddress(r.supplier_address)], ["구매처(지급) 지갑", shortAddress(r.payer_address)], ["은행 지갑", shortAddress(r.bank_address)], ["원장 동기화", formatDateTime(r.synced_at)]]} />
       {r.events.length ? <ol className="timeline">{r.events.map((e, i) => <li key={i}><strong>{eventLabel[e.event_type] ?? e.event_type}</strong>
-        <span className="muted">{formatDateTime(e.occurred_at)} · 블록 {e.block_number} · <span className="mono" title={e.tx_hash}>{shortHash(e.tx_hash)}</span>{e.payload?.amountRaw ? ` · ${formatTokenRaw(e.payload.amountRaw)}` : ""}</span></li>)}</ol>
+        <span className="muted">{formatDateTime(e.occurred_at)} · 블록 {e.block_number} · <span className="mono" title={e.tx_hash}>{transactionLink(chain?.chainId, e.tx_hash) ? <a href={transactionLink(chain?.chainId, e.tx_hash)!} target="_blank" rel="noreferrer">{shortHash(e.tx_hash)}</a> : shortHash(e.tx_hash)}</span>{e.payload?.amountRaw ? ` · ${formatTokenRaw(e.payload.amountRaw)}` : ""}</span></li>)}</ol>
         : <p className="muted">결제 이벤트가 아직 없습니다.</p>}
       {role === "supplier" && r.chain_status === "REGISTERED" && <div className="actions"><Button variant="danger" disabled={tx.open} onClick={() => { if (confirm("등록을 취소하면 이 거래번호로는 다시 등록할 수 없습니다. 계속할까요?")) void tx.start("CANCEL"); }} data-testid="start-cancel">채권 등록 취소</Button></div>}
     </details>

@@ -4,6 +4,7 @@ import type { NextConfig } from "next";
 try { process.loadEnvFile(new URL("../../.env", import.meta.url).pathname); } catch { /* optional */ }
 
 const config: NextConfig = {
+  distDir: process.env.PAIDAHEAD_NETWORK === "injective-testnet" ? ".next-testnet" : ".next",
   // The monorepo pins the native TypeScript 7 compiler, which has no JS API for Next's built-in checker.
   // Types are checked by `npm run typecheck -w @paidahead/web` (part of the root `npm run check`).
   typescript: { ignoreBuildErrors: true },

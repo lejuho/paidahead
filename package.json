@@ -31,7 +31,8 @@
     "db:local:stop": "node scripts/local-pg.mjs stop",
     "demo:fund": "node --env-file-if-exists=.env scripts/demo-fund.mjs",
     "e2e:web": "npm run e2e -w @paidahead/web",
-    "stack": "node --env-file-if-exists=.env scripts/stack.mjs"
+    "stack": "node --env-file-if-exists=.env scripts/stack.mjs",
+    "testnet": "node scripts/testnet.mjs"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox-viem": "5.0.7",
